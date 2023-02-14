@@ -17,17 +17,16 @@ app.use((req, res, next) => {
     next();
   });
 
-  /*
+  
   app.use("/helloWorld", (req, res) => {
     return res.send("Hello World!");
-  }); */
-
-  
-  app.use(notFoundMiddleware);
-  app.use(errorMiddleware);
+  }); 
 
   app.use('/api/v1/carts', cartRoutes)
   app.use('/api/v1/products', productRoutes)
+  
+  app.use(notFoundMiddleware);
+  app.use(errorMiddleware);
 
   const port = process.env.PORT || 5000;
 

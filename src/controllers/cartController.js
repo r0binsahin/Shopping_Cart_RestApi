@@ -3,12 +3,10 @@ const Cart = require ('../models/Cart')
 
 //--------------------------------------------//
 exports.getAllCarts = async (req, res) => {
-    const limit = Number(req.query?.limit || 10);
-    const offset = Number(req.query?.offset || 0);
+
 
     const carts = await await Cart.find()
-    .limit(limit)
-    .skip(offset);
+
 
     if (!carts) throw new NotFoundError("There are no carts to show");
 
@@ -18,8 +16,6 @@ exports.getAllCarts = async (req, res) => {
         data: Cart,
         meta: {
           total: totalCartsInDatabase,
-          limit: limit,
-          offset: offset,
           count: carts.length,
         },
       });
@@ -43,7 +39,7 @@ exports.getCartById = async (req, res) => {
     const products= req.body.products || [];
     
 
-    if (!cartName) throw new BadRequestError("You must provide a  name");
+    if (!cartName || cartName.toString().length === 0) throw new BadRequestError("You must provide a  name");
 
   
     const newCart = await Cart.create({
