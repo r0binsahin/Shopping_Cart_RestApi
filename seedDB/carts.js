@@ -2,26 +2,26 @@ exports.carts = [
 {
     cartName: "cart1",
     totalPrice: 0,
-    products: []
+    productId: []
 },
 {
     cartName: "cart2",
     totalPrice: 0,
-    products: []
+    productId: []
 },
 {
     cartName: "cart3",
     totalPrice: 0,
-    products: []
+    productId: []
 },
 {
     cartName: "cart4",
     totalPrice: 0,
-    products: []
+    productId: []
 },
 {
     cartName: "cart5",
     totalPrice: 0,
-    products: []
+    productId: []
 },
 ]

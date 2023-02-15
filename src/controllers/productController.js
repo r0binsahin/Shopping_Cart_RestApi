@@ -6,7 +6,7 @@ exports.getAllProducts = async (req, res) => {
     const limit = Number(req.query?.limit || 10);
     const offset = Number(req.query?.offset || 0);
 
-    const products = await await Product.find()
+    const products =  await Product.find()
     .limit(limit)
     .skip(offset);
 
@@ -15,7 +15,7 @@ exports.getAllProducts = async (req, res) => {
     const totalProductsInDatabase = await Product.countDocuments();
 
     return res.json({
-        data: Product,
+        data: products,
         meta: {
           total: totalProductsInDatabase,
           limit: limit,
@@ -27,7 +27,7 @@ exports.getAllProducts = async (req, res) => {
 
 //--------------------------------------------------------------//
 exports.getProductById = async (req, res) => {
-    const productId = req.params.productId;
+    const productId = req.body.productId;
   
     const product = await Product.findById(productId);
   
@@ -39,14 +39,14 @@ exports.getProductById = async (req, res) => {
   //--------------------------------------------------------------//
 
   exports.showProductsInCart = async(req, res) => {
-    const cart = await Cart.find({}, { products: true }) 
+    const cart = await Cart.find({}, { productId: true }) 
 
   const productDataOnly = [];
-  cart.forEach((course) => {
-    course.products.forEach((product) => {
+
+    cart.forEach((product) => {
     productDataOnly.push(product);
     });
-  });
+
 
   return res.json({
     data: productDataOnly,

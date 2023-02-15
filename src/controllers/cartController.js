@@ -1,5 +1,6 @@
 const { NotFoundError, BadRequestError} = require('../utils/errors')
 const Cart = require ('../models/Cart')
+const Product = require('../models/Product')
 
 //--------------------------------------------//
 exports.getAllCarts = async (req, res) => {
@@ -13,7 +14,7 @@ exports.getAllCarts = async (req, res) => {
     const totalCartsInDatabase = await Cart.countDocuments();
 
     return res.json({
-        data: Cart,
+        data: carts,
         meta: {
           total: totalCartsInDatabase,
           count: carts.length,
@@ -25,7 +26,8 @@ exports.getAllCarts = async (req, res) => {
 exports.getCartById = async (req, res) => {
     const cartId = req.params.cartId;
   
-    const cart = await Cart.findById(cartId);
+    const cart = await Cart.findById(cartId)
+    .populate('productId')
   
     if (!cart) throw new NotFoundError("This cart does not exist");
   
@@ -36,7 +38,7 @@ exports.getCartById = async (req, res) => {
   exports.createNewCart = async (req, res) => {
     const cartName = req.body.cartName;
     const totalPrice = req.body.totalPrice || 0;
-    const products= req.body.products || [];
+    const productId= req.body.productId || [];
     
 
     if (!cartName || cartName.toString().length === 0) throw new BadRequestError("You must provide a  name");
@@ -45,7 +47,7 @@ exports.getCartById = async (req, res) => {
     const newCart = await Cart.create({
       cartName: cartName,
       totalPrice: totalPrice,
-      products: products
+      productId: productId
     });
   
     return res
@@ -64,7 +66,7 @@ exports.getCartById = async (req, res) => {
     const {
         cartName,
         totalPrice,
-        products
+        productId
     } = req.body;
   
   
@@ -78,7 +80,7 @@ exports.getCartById = async (req, res) => {
   
     if (cartName) cartToUpdate.cartName = cartName;
     if (totalPrice) cartToUpdate.totalPrice = totalPrice;
-    if (products) cartToUpdate.products = products;
+    if (productId) cartToUpdate.productId = productId;
  
     const updatedCart = await cartToUpdate.save();
 
@@ -96,19 +98,64 @@ exports.deleteCartById = async (req, res) => {
     return res.sendStatus(204);
   };
 
-  //-----------------------------------//
-  exports.deleteOneProductFromCart = async(req, res)=> {
-    return null
-  }
-
-  //-----------------------------------//
-  exports.emptyCart = async(req, res)=> {
-    return null
-  }
-
-  /*
+    
   //-----------------------------------//
   exports.addProductToCart = async(req, res)=> {
+    const cartId = req.params.cartId;
+    const _id = req.body.productId
+    //const productPrice = req.body.productPrice
+    const cart = await Cart.findById(cartId)
 
-    return null
-  } */
+    const products = cart.productId
+    
+    products.push(_id)
+    
+    await cart.populate('productId')
+
+    let totalPrice = 0;
+    products.forEach(product =>{
+      totalPrice += product.productPrice;
+    })
+
+    cart.totalPrice = totalPrice;
+
+    if (!cart) throw new NotFoundError("This cart does not exist");
+
+    await cart.save();
+
+  
+
+    return res.json(cart)
+  } 
+  
+  //-----------------------------------//
+  exports.deleteOneProductFromCart = async(req, res)=> {
+    const cartId = req.params.cartId;
+    const productId = req.body.productId
+    const cart = await Cart.findById(cartId);
+    if (!cart) throw new NotFoundError("This cart does not exist");
+
+    const products = cart.productId
+
+    const removeProductById = (products, productId)=>{      
+      const findIndex = products.findIndex((products)=>products?._id == productId)
+
+      if(findIndex> -1){
+        products.splice(findIndex, 1)
+      }
+    }
+    removeProductById(products, productId)
+
+    let totalPrice = 0;
+    products.forEach(product =>{
+      totalPrice += product.productPrice;
+    })
+
+    cart.totalPrice = totalPrice;
+    await cart.save();
+    const cartRes = await cart.populate('productId')
+    return res.json(cartRes)
+  }
+
+  
+

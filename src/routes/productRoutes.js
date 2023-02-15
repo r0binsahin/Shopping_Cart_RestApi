@@ -9,6 +9,6 @@ const {
 
 router.get("/", getAllProducts);
 router.get("/:productId", getProductById);
-router.get("/carts/:cartId/products", showProductsInCart);
+router.get("/carts/:cartId/productId", showProductsInCart);
 
 module.exports = router;
