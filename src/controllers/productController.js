@@ -27,7 +27,7 @@ exports.getAllProducts = async (req, res) => {
 
 //--------------------------------------------------------------//
 exports.getProductById = async (req, res) => {
-    const productId = req.body.productId;
+    const productId = req.params.productId;
   
     const product = await Product.findById(productId);
   
@@ -35,25 +35,4 @@ exports.getProductById = async (req, res) => {
   
     return res.json(product);
   };
-
-  //--------------------------------------------------------------//
-
-  exports.showProductsInCart = async(req, res) => {
-    const cart = await Cart.find({}, { productId: true }) 
-
-  const productDataOnly = [];
-
-    cart.forEach((product) => {
-    productDataOnly.push(product);
-    });
-
-
-  return res.json({
-    data: productDataOnly,
-    meta: {
-      count: productDataOnly.length,
-    },
-  });
-   
-  }
 

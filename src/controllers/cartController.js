@@ -1,13 +1,12 @@
 const { NotFoundError, BadRequestError} = require('../utils/errors')
 const Cart = require ('../models/Cart')
 const Product = require('../models/Product')
+const { products } = require('../../seedDB/products')
 
 //--------------------------------------------//
 exports.getAllCarts = async (req, res) => {
 
-
     const carts = await await Cart.find()
-
 
     if (!carts) throw new NotFoundError("There are no carts to show");
 
@@ -27,7 +26,7 @@ exports.getCartById = async (req, res) => {
     const cartId = req.params.cartId;
   
     const cart = await Cart.findById(cartId)
-    .populate('productId')
+    .populate('products.product')
   
     if (!cart) throw new NotFoundError("This cart does not exist");
   
@@ -38,7 +37,7 @@ exports.getCartById = async (req, res) => {
   exports.createNewCart = async (req, res) => {
     const cartName = req.body.cartName;
     const totalPrice = req.body.totalPrice || 0;
-    const productId= req.body.productId || [];
+    const products= req.body.products || [];
     
 
     if (!cartName || cartName.toString().length === 0) throw new BadRequestError("You must provide a  name");
@@ -47,7 +46,7 @@ exports.getCartById = async (req, res) => {
     const newCart = await Cart.create({
       cartName: cartName,
       totalPrice: totalPrice,
-      productId: productId
+      products: products
     });
   
     return res
@@ -66,7 +65,7 @@ exports.getCartById = async (req, res) => {
     const {
         cartName,
         totalPrice,
-        productId
+        products
     } = req.body;
   
   
@@ -80,7 +79,7 @@ exports.getCartById = async (req, res) => {
   
     if (cartName) cartToUpdate.cartName = cartName;
     if (totalPrice) cartToUpdate.totalPrice = totalPrice;
-    if (productId) cartToUpdate.productId = productId;
+    if (products) cartToUpdate.products = products;
  
     const updatedCart = await cartToUpdate.save();
 
@@ -97,33 +96,40 @@ exports.deleteCartById = async (req, res) => {
   
     return res.sendStatus(204);
   };
-
     
   //-----------------------------------//
   exports.addProductToCart = async(req, res)=> {
     const cartId = req.params.cartId;
-    const _id = req.body.productId
-    //const productPrice = req.body.productPrice
+    const pId= req.body.pId
+    let quantityToAdd= req.body.quantity || 1
     const cart = await Cart.findById(cartId)
-
-    const products = cart.productId
-    
-    products.push(_id)
-    
-    await cart.populate('productId')
-
-    let totalPrice = 0;
-    products.forEach(product =>{
-      totalPrice += product.productPrice;
-    })
-
-    cart.totalPrice = totalPrice;
 
     if (!cart) throw new NotFoundError("This cart does not exist");
 
-    await cart.save();
+    const products = cart.products
 
-  
+    const existingProductIndex = products.findIndex((product)=> product.product == pId)
+
+    if(existingProductIndex > -1){
+      products[existingProductIndex].quantity += quantityToAdd
+    } else {
+      products.push({
+        product: pId,
+        quantity: quantityToAdd
+      })
+    }
+
+    await cart.populate('products.product')
+
+    let totalPrice = cart.totalPrice || 0;
+    products.forEach(product =>{
+      if (product.product._id == pId) {
+        totalPrice += product.product.productPrice* quantityToAdd;
+      }
+    }) 
+    cart.totalPrice = totalPrice;    
+
+    await cart.save();
 
     return res.json(cart)
   } 
@@ -131,29 +137,40 @@ exports.deleteCartById = async (req, res) => {
   //-----------------------------------//
   exports.deleteOneProductFromCart = async(req, res)=> {
     const cartId = req.params.cartId;
-    const productId = req.body.productId
+    const pId = req.body.pId
+    let quantityToRemove = req.body.quantity || 1
     const cart = await Cart.findById(cartId);
     if (!cart) throw new NotFoundError("This cart does not exist");
 
-    const products = cart.productId
+    let products = cart.products
+    await cart.populate('products.product')
 
-    const removeProductById = (products, productId)=>{      
-      const findIndex = products.findIndex((products)=>products?._id == productId)
+    const productIndex = products.findIndex((product)=> product.product._id== pId)
 
-      if(findIndex> -1){
-        products.splice(findIndex, 1)
-      }
+    if(productIndex < 0)   throw  new BadRequestError("Already empty cart!") 
+
+    if(products[productIndex].quantity > quantityToRemove) {
+      products[productIndex].quantity  -= quantityToRemove
+
+      let totalPrice = cart.totalPrice || 0;
+
+      products.forEach(product =>{
+        if (product.product._id == pId) {
+          totalPrice -= product.product.productPrice* quantityToRemove;
+        }
+      }) 
+
+      cart.totalPrice = totalPrice;  
+
+    } else {
+      cart.totalPrice -= products[productIndex].product.productPrice
+    products.splice(productIndex, 1)
     }
-    removeProductById(products, productId)
 
-    let totalPrice = 0;
-    products.forEach(product =>{
-      totalPrice += product.productPrice;
-    })
+    //await cart.populate('products.product')
 
-    cart.totalPrice = totalPrice;
     await cart.save();
-    const cartRes = await cart.populate('productId')
+    const cartRes = await cart.populate('products.product')
     return res.json(cartRes)
   }
 

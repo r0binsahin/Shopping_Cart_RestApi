@@ -1,30 +1,32 @@
 exports.products = [
     {
         productName: "Note-book",
-        productPrice: 35
+        productPrice: 35,
     },
     {
         productName: "Paper sheets",
-        productPrice: 150
+        productPrice: 150,
     },
     {
         productName: "Eraser",
-        productPrice: 20
+        productPrice: 20,
     },
     {
         productName: "Pencil",
-        productPrice: 30
+        productPrice: 30,
+
     },
     {
         productName: "Pencil sharpener",
-        productPrice: 45
+        productPrice: 45,
     },
     {
         productName: "Colored pencils",
-        productPrice: 95
+        productPrice: 95,
+       
     },
     {
         productName: "Ruler set",
-        productPrice: 100
+        productPrice: 100,
     },
 ]
